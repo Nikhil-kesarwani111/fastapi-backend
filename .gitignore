@@ -1,0 +1,20 @@
+# Virtual environments
+venv/
+.env
+*.env
+
+# Byte-compiled / cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs and misc
+*.log
+
+# IDEs
+.vscode/
+.idea/
+
+# Alembic cache
+alembic/__pycache__/

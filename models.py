@@ -1,12 +1,10 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
-
+from sqlalchemy import Boolean, Column, LargeBinary, Integer, Text
 from database import Base
 
-
-class ToDo(Base):
-    __tablename__ = "todos"
+class PDF(Base):
+    __tablename__ = "pdfs"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    completed = Column(Boolean, default=False)
+    name = Column(Text)
+    file = Column(Text)
+    selected = Column(Boolean, default=False)

@@ -1,13 +1,15 @@
 from pydantic import BaseModel
 
-class ToDoRequest(BaseModel):
+class PDFRequest(BaseModel):
     name: str
-    completed: bool
+    selected: bool = False
+    file: str | None = None   # optional for create_pdf (normal create)
 
-class ToDoResponse(BaseModel):
-    name: str
-    completed: bool
+class PDFResponse(BaseModel):
     id: int
+    name: str
+    selected: bool
+    file: str | None
 
     class Config:
         orm_mode = True

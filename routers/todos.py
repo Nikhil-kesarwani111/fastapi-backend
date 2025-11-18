@@ -1,13 +1,13 @@
 from typing import List
-from sqlalchemy.orm import Session  #database Session
-from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 import schemas
 import crud
 from database import SessionLocal
+from uuid import uuid4
 
-router = APIRouter(
-    prefix="/todos"
-)
+router = APIRouter(prefix="/pdfs")
+
 
 def get_db():
     db = SessionLocal()
@@ -16,32 +16,47 @@ def get_db():
     finally:
         db.close()
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-def create_todo(todo: schemas.ToDoRequest, db: Session = Depends(get_db)):
-    todo = crud.create_todo(db, todo)
-    return todo
 
-@router.get("", response_model=List[schemas.ToDoResponse])
-def get_todos(completed: bool = None, db: Session = Depends(get_db)):
-    todos = crud.read_todos(db, completed)
-    return todos
+# Create PDF without upload
+@router.post("", response_model=schemas.PDFResponse, status_code=status.HTTP_201_CREATED)
+def create_pdf(pdf: schemas.PDFRequest, db: Session = Depends(get_db)):
+    return crud.create_pdf(db, pdf)
 
-@router.get("/{id}")
-def get_todo_by_id(id: int, db: Session = Depends(get_db)):
-    todo = crud.read_todo(db, id)
-    if todo is None:
-        raise HTTPException(status_code=404, detail="to do not found")
-    return todo
 
-@router.put("/{id}")
-def update_todo(id: int, todo: schemas.ToDoRequest, db: Session = Depends(get_db)):
-    todo = crud.update_todo(db, id, todo)
-    if todo is None:
-        raise HTTPException(status_code=404, detail="to do not found")
-    return todo
+# Upload a file and create a PDF record
+@router.post("/upload", response_model=schemas.PDFResponse, status_code=status.HTTP_201_CREATED)
+def upload_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    file_name = f"{uuid4()}-{file.filename}"
+    return crud.upload_pdf(db, file, file_name)
 
+
+# Get all PDFs or filter by ?selected=true/false
+@router.get("", response_model=List[schemas.PDFResponse])
+def get_pdfs(selected: bool = None, db: Session = Depends(get_db)):
+    return crud.read_pdfs(db, selected)
+
+
+# Get single PDF by ID
+@router.get("/{id}", response_model=schemas.PDFResponse)
+def get_pdf_by_id(id: int, db: Session = Depends(get_db)):
+    pdf = crud.read_pdf(db, id)
+    if pdf is None:
+        raise HTTPException(status_code=404, detail="PDF not found")
+    return pdf
+
+
+# Update PDF
+@router.put("/{id}", response_model=schemas.PDFResponse)
+def update_pdf(id: int, pdf: schemas.PDFRequest, db: Session = Depends(get_db)):
+    updated_pdf = crud.update_pdf(db, id, pdf)
+    if updated_pdf is None:
+        raise HTTPException(status_code=404, detail="PDF not found")
+    return updated_pdf
+
+
+# Delete PDF
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
-def delete_todo(id: int, db: Session = Depends(get_db)):
-    res = crud.delete_todo(db, id)
-    if res is None:
-        raise HTTPException(status_code=404, detail="to do not found")
+def delete_pdf(id: int, db: Session = Depends(get_db)):
+    if not crud.delete_pdf(db, id):
+        raise HTTPException(status_code=404, detail="PDF not found")
+    return {"message": "PDF deleted successfully"}
